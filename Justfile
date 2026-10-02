@@ -50,17 +50,6 @@ _brew-personal:
         echo "Skipping personal apps."
     fi
 
-# Copy the shared AGENTS.md into the current directory
-init-project:
-    #!/usr/bin/env bash
-    dest="{{ invocation_directory() }}/AGENTS.md"
-    if [[ -e "$dest" ]]; then
-        echo "AGENTS.md already exists here, leaving it untouched."
-    else
-        cp {{ justfile_directory() }}/agents/AGENTS.md "$dest"
-        echo "✓ Copied AGENTS.md"
-    fi
-
 # Generate a new SSH key
 key:
     #!/usr/bin/env bash
@@ -193,14 +182,6 @@ _claude:
     if ! command -v claude >/dev/null 2>&1; then
         curl -fsSL https://claude.ai/install.sh | bash
     fi
-    mkdir -p ~/.claude
-    ln -sfn {{ justfile_directory() }}/agents/statusline.sh ~/.claude/statusline.sh
-    # Register the status line in settings.json (merge, don't clobber existing keys)
-    settings="$HOME/.claude/settings.json"
-    [[ -f "$settings" ]] || echo '{}' > "$settings"
-    tmp=$(mktemp)
-    jq '.statusLine = {type: "command", command: "~/.claude/statusline.sh"}' \
-        "$settings" > "$tmp" && mv "$tmp" "$settings"
 
 
 _ssh-config:
