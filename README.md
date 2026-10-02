@@ -15,7 +15,7 @@ curl -fsSL https://raw.githubusercontent.com/groogg/dev/main/install.sh | bash
 A `dev` CLI is available after install — it wraps the underlying `just` commands. Run `dev` at any time to see available commands.
 
 - `dev install` installs missing dependencies and applies the configuration without upgrading existing tools.
-- `dev update` upgrades Homebrew packages on macOS, updates installed toolchains, and updates skill submodules.
+- `dev update` upgrades Homebrew packages on macOS and updates installed toolchains.
 - `dev sync` re-applies dotfile symlinks without downloading or upgrading anything.
 
 ## Git config
@@ -26,4 +26,4 @@ SSH keys are managed via [Secretive](https://github.com/maxgoedjen/secretive), w
 
 ## Agentic setup
 
-The install optionally sets up AI coding agents with a shared library of instructions and skills. See [`agents/skills/`](agents/skills/) for details.
+The install optionally sets up Claude Code with a shared status line. Run `dev init-project` to copy the shared [`agents/AGENTS.md`](agents/AGENTS.md) into a project.

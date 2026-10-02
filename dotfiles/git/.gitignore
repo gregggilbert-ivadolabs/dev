@@ -3,9 +3,6 @@
 .env
 .mypy_cache
 .tool-versions
-.idea
 .claude
-.antigravitycli
-.serena
 .vscode
 settings.local.json

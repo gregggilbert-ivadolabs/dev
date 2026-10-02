@@ -1,6 +1,6 @@
 export PATH := env_var('HOME') + "/.local/bin:/opt/homebrew/bin:/usr/local/bin:" + env_var('HOME') + "/.cargo/bin:" + env_var('PATH')
 
-stow_packages := if os() == "macos" { "zsh git ghostty vscode nvim starship" } else { "zsh git nvim starship" }
+stow_packages := if os() == "macos" { "zsh git ghostty vscode starship" } else { "zsh git starship" }
 
 # Show available recipes
 default:
@@ -15,10 +15,10 @@ install: _setup-linux
 
 # Upgrade installed tools
 [macos]
-update: _brew-update _toolchains-update _submodules
+update: _brew-update _toolchains-update
 
 [linux]
-update: _toolchains-update _submodules
+update: _toolchains-update
 
 # Re-stow dotfiles
 sync: _dot
@@ -72,99 +72,6 @@ key:
     ssh-add ~/.ssh/$name
     cat ~/.ssh/$name.pub
 
-# Symlink an external skills directory (e.g. a cloned skills repo) into selected agent config dirs
-link-skills:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    # Prompt for source path
-    printf "Path to skills directory: " && read -e src
-    src="${src/#\~/$HOME}"
-
-    # Validate source
-    if [[ ! -d "$src" ]]; then
-        echo "Error: '$src' is not a directory." >&2
-        exit 1
-    fi
-
-    # Check there are subdirectories to link
-    dirs=("$src"/*/)
-    if [[ ${#dirs[@]} -eq 0 || ! -d "${dirs[0]}" ]]; then
-        echo "Error: no skill subdirectories found in '$src'." >&2
-        exit 1
-    fi
-
-    # Pick destination(s)
-    dest=$(printf 'claude\nagents\n' | fzf -m --header "Select destination(s) (Tab to multi-select)")
-    [[ -z "$dest" ]] && echo "No destination selected." && exit 0
-
-    claude_dir="$HOME/.claude/skills"
-    agents_dir="$HOME/.agents/skills" # shared by pi, amp, and other Agent Skills-standard tools
-
-    for target in $dest; do
-        case "$target" in
-            claude) dest_dir="$claude_dir" ;;
-            agents) dest_dir="$agents_dir" ;;
-        esac
-
-        mkdir -p "$dest_dir"
-        count=0
-
-        for skill in "$src"/*/; do
-            name=$(basename "$skill")
-            link="$dest_dir/$name"
-
-            # Remove existing entry (directory or old symlink)
-            if [[ -e "$link" || -L "$link" ]]; then
-                rm -rf "$link"
-                echo "  replaced: $name -> $target"
-            else
-                echo "  linked:   $name -> $target"
-            fi
-
-            ln -s "$(cd "$skill" && pwd)" "$link"
-            count=$((count + 1))
-        done
-
-        echo "✓ $count skill(s) symlinked into $dest_dir"
-    done
-
-_submodules:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    git -C {{ justfile_directory() }} submodule update --init --remote --single-branch
-    just --justfile {{ justfile() }} _vendor-links
-
-_submodules-init:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    git -C {{ justfile_directory() }} submodule update --init --single-branch
-    just --justfile {{ justfile() }} _vendor-links
-
-_vendor-links:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    vendor="{{ justfile_directory() }}/agents/skills/vendor/mattpocock-skills/skills"
-    dest="{{ justfile_directory() }}/agents/skills"
-
-    for group in engineering productivity; do
-        [[ ! -d "$vendor/$group" ]] && continue
-        for skill in "$vendor/$group"/*/; do
-            name=$(basename "$skill")
-            link="$dest/$name"
-            [[ -d "$skill" ]] || continue
-            [[ ! -f "$skill/SKILL.md" ]] && continue
-            if [[ -L "$link" ]]; then
-                rm "$link"
-            elif [[ -e "$link" ]]; then
-                continue  # don't clobber local skills
-            fi
-            # relative target so the symlink resolves for anyone who clones the repo
-            ln -s "vendor/mattpocock-skills/skills/$group/$name" "$link"
-        done
-    done
-    echo "✓ Vendor skills symlinked"
-
 # --- Internal ---
 
 _setup-mac: _configure _brew _brew-personal _shell _dot _uv _rust _ssh-config _hooks _agentic _macos
@@ -173,11 +80,11 @@ _setup-linux: _configure _linux-deps _shell _dot _uv _rust _ssh-config _hooks _a
 
 _agentic-optional:
     #!/usr/bin/env bash
-    printf "Install AI coding agents? [y/N] " && read -r answer
+    printf "Install Claude Code? [y/N] " && read -r answer
     if [[ "$answer" =~ ^[Yy]$ ]]; then
         just --justfile {{ justfile() }} _agentic
     else
-        echo "Skipping AI coding agents."
+        echo "Skipping Claude Code."
     fi
 
 _brew:
@@ -255,14 +162,6 @@ _linux-deps:
         rm "/tmp/${asset}" /tmp/gitleaks_checksums.txt /tmp/gitleaks.sha256
     fi
 
-    # Neovim plugins require >= 0.10; distro packages may be older.
-    if ! nvim --version 2>/dev/null | head -1 | grep -qE '0\.(1[0-9]|[2-9][0-9])|[1-9]+\.'; then
-        arch=$(uname -m | sed 's/aarch64/arm64/')
-        curl -fsSL -o /tmp/nvim.tar.gz "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${arch}.tar.gz"
-        sudo tar -xzf /tmp/nvim.tar.gz -C /usr/local --strip-components=1
-        rm /tmp/nvim.tar.gz
-    fi
-
     if ! command -v gh >/dev/null 2>&1; then
         curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
@@ -287,15 +186,14 @@ _linux-deps:
     fi
 
 
-_agentic: _claude _amp _pi
+_agentic: _claude
 
-_claude: _submodules-init
+_claude:
     #!/usr/bin/env bash
     if ! command -v claude >/dev/null 2>&1; then
         curl -fsSL https://claude.ai/install.sh | bash
     fi
     mkdir -p ~/.claude
-    ln -sfn {{ justfile_directory() }}/agents/skills ~/.claude/skills
     ln -sfn {{ justfile_directory() }}/agents/statusline.sh ~/.claude/statusline.sh
     # Register the status line in settings.json (merge, don't clobber existing keys)
     settings="$HOME/.claude/settings.json"
@@ -317,29 +215,6 @@ _ssh-config:
         grep -q "AddKeysToAgent" ~/.ssh/config 2>/dev/null || \
             printf '\nHost *\n\tAddKeysToAgent yes\n' >> ~/.ssh/config
     fi
-
-[macos]
-_amp: _submodules-init
-    #!/usr/bin/env bash
-    mkdir -p ~/.agents
-    ln -sfn {{ justfile_directory() }}/agents/skills ~/.agents/skills
-
-[linux]
-_amp: _submodules-init
-    #!/usr/bin/env bash
-    if ! command -v amp >/dev/null 2>&1; then
-        curl -fsSL https://ampcode.com/install.sh | bash
-    fi
-    mkdir -p ~/.agents
-    ln -sfn {{ justfile_directory() }}/agents/skills ~/.agents/skills
-
-_pi: _submodules-init
-    #!/usr/bin/env bash
-    if ! command -v pi >/dev/null 2>&1; then
-        curl -fsSL https://pi.dev/install.sh | sh
-    fi
-    mkdir -p ~/.agents
-    ln -sfn {{ justfile_directory() }}/agents/skills ~/.agents/skills
 
 _macos:
     #!/usr/bin/env bash

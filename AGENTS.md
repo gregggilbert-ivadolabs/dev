@@ -10,8 +10,8 @@ driven by `just` (wrapped by a `dev` CLI) and GNU `stow`.
 ## Build/Install Commands
 
 - `just install` (or `dev install`) — full setup for the current OS (`_setup-mac` / `_setup-linux`)
-- `just sync` — re-stow dotfiles and update skill submodules
-- `just link-skills` — symlink an external skills directory (e.g. a cloned skills repo) into selected agent destinations (claude, agents)
+- `just update` (or `dev update`) — upgrade Homebrew packages (macOS) and installed toolchains
+- `just sync` — re-stow dotfiles
 - `just init-project` — copy `agents/AGENTS.md` into the current directory
 - `just key` — generate a new SSH key (for Linux/non-Secretive setups; on macOS keys are managed by Secretive)
 - `brew bundle --file Brewfile` — install core Homebrew packages
@@ -31,7 +31,6 @@ driven by `just` (wrapped by a `dev` CLI) and GNU `stow`.
 - `Justfile` — all setup/maintenance recipes; `_setup-mac` / `_setup-linux` are the OS entry points
 - `Brewfile` / `Brewfile.personal` — core vs. optional Homebrew packages
 - `dotfiles/<pkg>/` — stow packages (zsh, git, ghostty, vscode, starship)
-- `agents/skills/` — canonical skills library, symlinked into each agent's global config; vendor skills come from the `mattpocock-skills` git submodule
 - `agents/AGENTS.md`, `agents/statusline.sh` — shared payload shipped to projects/agents
 - `install.sh` — bootstrap entry point (clones repo, installs `just`, runs `just install`)
 

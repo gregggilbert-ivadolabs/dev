@@ -1,12 +1,9 @@
 # code
 cask 'podman-desktop' # instead of docker-desktop
-cask 'pycharm'
 cask 'visual-studio-code'
 
 # agentic
 cask 'claude-code'
-tap 'ampcode/tap', trusted: true
-brew 'ampcode/tap/ampcode'
 
 # fonts
 cask 'font-jetbrains-mono-nerd-font'
