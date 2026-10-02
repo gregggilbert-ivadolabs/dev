@@ -1,6 +1,5 @@
 # code
 cask 'podman-desktop' # instead of docker-desktop
-cask 'pycharm'
 cask 'visual-studio-code'
 
 # agentic
