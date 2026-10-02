@@ -3,6 +3,7 @@ cask 'podman-desktop' # instead of docker-desktop
 cask 'visual-studio-code'
 
 # agentic
+cask 'claude' # Claude Desktop
 cask 'claude-code'
 
 # fonts

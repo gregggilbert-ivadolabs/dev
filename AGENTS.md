@@ -3,16 +3,11 @@
 This repo manages dotfiles, Homebrew packages, and AI coding-agent setup. It is
 driven by `just` (wrapped by a `dev` CLI) and GNU `stow`.
 
-> Note: `agents/AGENTS.md` is a *different* file — it is the shared instruction
-> payload copied into other projects via `just init-project`. This file is about
-> working on this repo itself.
-
 ## Build/Install Commands
 
 - `just install` (or `dev install`) — full setup for the current OS (`_setup-mac` / `_setup-linux`)
 - `just update` (or `dev update`) — upgrade Homebrew packages (macOS) and installed toolchains
 - `just sync` — re-stow dotfiles
-- `just init-project` — copy `agents/AGENTS.md` into the current directory
 - `just key` — generate a new SSH key (for Linux/non-Secretive setups; on macOS keys are managed by Secretive)
 - `brew bundle --file Brewfile` — install core Homebrew packages
 - `brew bundle --file Brewfile.personal` — install personal apps (optional, prompted during install)
@@ -31,7 +26,6 @@ driven by `just` (wrapped by a `dev` CLI) and GNU `stow`.
 - `Justfile` — all setup/maintenance recipes; `_setup-mac` / `_setup-linux` are the OS entry points
 - `Brewfile` / `Brewfile.personal` — core vs. optional Homebrew packages
 - `dotfiles/<pkg>/` — stow packages (zsh, git, ghostty, vscode, starship)
-- `agents/AGENTS.md`, `agents/statusline.sh` — shared payload shipped to projects/agents
 - `install.sh` — bootstrap entry point (clones repo, installs `just`, runs `just install`)
 
 ## Testing
