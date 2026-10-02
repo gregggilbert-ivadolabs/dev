@@ -15,10 +15,10 @@ install: _setup-linux
 
 # Upgrade installed tools
 [macos]
-update: _brew-update _toolchains-update _submodules
+update: _brew-update _toolchains-update
 
 [linux]
-update: _toolchains-update _submodules
+update: _toolchains-update
 
 # Re-stow dotfiles
 sync: _dot
@@ -71,99 +71,6 @@ key:
     eval "$(ssh-agent -s)"
     ssh-add ~/.ssh/$name
     cat ~/.ssh/$name.pub
-
-# Symlink an external skills directory (e.g. a cloned skills repo) into selected agent config dirs
-link-skills:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    # Prompt for source path
-    printf "Path to skills directory: " && read -e src
-    src="${src/#\~/$HOME}"
-
-    # Validate source
-    if [[ ! -d "$src" ]]; then
-        echo "Error: '$src' is not a directory." >&2
-        exit 1
-    fi
-
-    # Check there are subdirectories to link
-    dirs=("$src"/*/)
-    if [[ ${#dirs[@]} -eq 0 || ! -d "${dirs[0]}" ]]; then
-        echo "Error: no skill subdirectories found in '$src'." >&2
-        exit 1
-    fi
-
-    # Pick destination(s)
-    dest=$(printf 'claude\nagents\n' | fzf -m --header "Select destination(s) (Tab to multi-select)")
-    [[ -z "$dest" ]] && echo "No destination selected." && exit 0
-
-    claude_dir="$HOME/.claude/skills"
-    agents_dir="$HOME/.agents/skills" # shared by pi, amp, and other Agent Skills-standard tools
-
-    for target in $dest; do
-        case "$target" in
-            claude) dest_dir="$claude_dir" ;;
-            agents) dest_dir="$agents_dir" ;;
-        esac
-
-        mkdir -p "$dest_dir"
-        count=0
-
-        for skill in "$src"/*/; do
-            name=$(basename "$skill")
-            link="$dest_dir/$name"
-
-            # Remove existing entry (directory or old symlink)
-            if [[ -e "$link" || -L "$link" ]]; then
-                rm -rf "$link"
-                echo "  replaced: $name -> $target"
-            else
-                echo "  linked:   $name -> $target"
-            fi
-
-            ln -s "$(cd "$skill" && pwd)" "$link"
-            count=$((count + 1))
-        done
-
-        echo "✓ $count skill(s) symlinked into $dest_dir"
-    done
-
-_submodules:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    git -C {{ justfile_directory() }} submodule update --init --remote --single-branch
-    just --justfile {{ justfile() }} _vendor-links
-
-_submodules-init:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    git -C {{ justfile_directory() }} submodule update --init --single-branch
-    just --justfile {{ justfile() }} _vendor-links
-
-_vendor-links:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    vendor="{{ justfile_directory() }}/agents/skills/vendor/mattpocock-skills/skills"
-    dest="{{ justfile_directory() }}/agents/skills"
-
-    for group in engineering productivity; do
-        [[ ! -d "$vendor/$group" ]] && continue
-        for skill in "$vendor/$group"/*/; do
-            name=$(basename "$skill")
-            link="$dest/$name"
-            [[ -d "$skill" ]] || continue
-            [[ ! -f "$skill/SKILL.md" ]] && continue
-            if [[ -L "$link" ]]; then
-                rm "$link"
-            elif [[ -e "$link" ]]; then
-                continue  # don't clobber local skills
-            fi
-            # relative target so the symlink resolves for anyone who clones the repo
-            ln -s "vendor/mattpocock-skills/skills/$group/$name" "$link"
-        done
-    done
-    echo "✓ Vendor skills symlinked"
 
 # --- Internal ---
 
@@ -289,13 +196,12 @@ _linux-deps:
 
 _agentic: _claude _amp _pi
 
-_claude: _submodules-init
+_claude:
     #!/usr/bin/env bash
     if ! command -v claude >/dev/null 2>&1; then
         curl -fsSL https://claude.ai/install.sh | bash
     fi
     mkdir -p ~/.claude
-    ln -sfn {{ justfile_directory() }}/agents/skills ~/.claude/skills
     ln -sfn {{ justfile_directory() }}/agents/statusline.sh ~/.claude/statusline.sh
     # Register the status line in settings.json (merge, don't clobber existing keys)
     settings="$HOME/.claude/settings.json"
@@ -318,28 +224,22 @@ _ssh-config:
             printf '\nHost *\n\tAddKeysToAgent yes\n' >> ~/.ssh/config
     fi
 
+# Installed via Brewfile on macOS
 [macos]
-_amp: _submodules-init
-    #!/usr/bin/env bash
-    mkdir -p ~/.agents
-    ln -sfn {{ justfile_directory() }}/agents/skills ~/.agents/skills
+_amp:
 
 [linux]
-_amp: _submodules-init
+_amp:
     #!/usr/bin/env bash
     if ! command -v amp >/dev/null 2>&1; then
         curl -fsSL https://ampcode.com/install.sh | bash
     fi
-    mkdir -p ~/.agents
-    ln -sfn {{ justfile_directory() }}/agents/skills ~/.agents/skills
 
-_pi: _submodules-init
+_pi:
     #!/usr/bin/env bash
     if ! command -v pi >/dev/null 2>&1; then
         curl -fsSL https://pi.dev/install.sh | sh
     fi
-    mkdir -p ~/.agents
-    ln -sfn {{ justfile_directory() }}/agents/skills ~/.agents/skills
 
 _macos:
     #!/usr/bin/env bash
