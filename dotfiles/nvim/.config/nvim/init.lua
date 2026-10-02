@@ -425,24 +425,6 @@ require("lazy").setup({
     end,
   },
 
-  -- Amp — editor integration ------------------------------------------
-  {
-    "ampcode/amp.nvim",
-    branch = "main",
-    lazy = false,
-    opts = { auto_start = true, log_level = "info" },
-    keys = {
-      {
-        "<leader>A",
-        function()
-          vim.cmd("botright vsplit | terminal amp --ide")
-          vim.cmd.startinsert()
-        end,
-        desc = "Open Amp",
-      },
-    },
-  },
-
 }, {
   ui = {
     icons = {

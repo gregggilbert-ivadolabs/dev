@@ -26,4 +26,4 @@ SSH keys are managed via [Secretive](https://github.com/maxgoedjen/secretive), w
 
 ## Agentic setup
 
-The install optionally sets up AI coding agents (Claude Code, Amp, pi) with a shared status line. Run `dev init-project` to copy the shared [`agents/AGENTS.md`](agents/AGENTS.md) into a project.
+The install optionally sets up Claude Code with a shared status line. Run `dev init-project` to copy the shared [`agents/AGENTS.md`](agents/AGENTS.md) into a project.

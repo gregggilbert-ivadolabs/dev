@@ -80,11 +80,11 @@ _setup-linux: _configure _linux-deps _shell _dot _uv _rust _ssh-config _hooks _a
 
 _agentic-optional:
     #!/usr/bin/env bash
-    printf "Install AI coding agents? [y/N] " && read -r answer
+    printf "Install Claude Code? [y/N] " && read -r answer
     if [[ "$answer" =~ ^[Yy]$ ]]; then
         just --justfile {{ justfile() }} _agentic
     else
-        echo "Skipping AI coding agents."
+        echo "Skipping Claude Code."
     fi
 
 _brew:
@@ -194,7 +194,7 @@ _linux-deps:
     fi
 
 
-_agentic: _claude _amp _pi
+_agentic: _claude
 
 _claude:
     #!/usr/bin/env bash
@@ -222,23 +222,6 @@ _ssh-config:
     else
         grep -q "AddKeysToAgent" ~/.ssh/config 2>/dev/null || \
             printf '\nHost *\n\tAddKeysToAgent yes\n' >> ~/.ssh/config
-    fi
-
-# Installed via Brewfile on macOS
-[macos]
-_amp:
-
-[linux]
-_amp:
-    #!/usr/bin/env bash
-    if ! command -v amp >/dev/null 2>&1; then
-        curl -fsSL https://ampcode.com/install.sh | bash
-    fi
-
-_pi:
-    #!/usr/bin/env bash
-    if ! command -v pi >/dev/null 2>&1; then
-        curl -fsSL https://pi.dev/install.sh | sh
     fi
 
 _macos:
