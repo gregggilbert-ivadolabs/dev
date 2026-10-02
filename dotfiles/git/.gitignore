@@ -4,7 +4,5 @@
 .mypy_cache
 .tool-versions
 .claude
-.antigravitycli
-.serena
 .vscode
 settings.local.json
